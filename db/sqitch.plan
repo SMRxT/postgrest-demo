@@ -6,3 +6,4 @@ postgrest/schema [public/extensions/uuid-ossp] 2016-01-25T20:50:20Z Andrew Radem
 postgrest/tables/account [postgrest/schema] 2016-01-25T20:53:54Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Creating basic user account for applicaiton.
 postgrest/roles/anonymous [postgrest/schema] 2016-01-25T21:19:55Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Added anon role.
 postgrest/roles/account [postgrest/schema] 2016-01-25T21:20:39Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Added account role.
+postgrest/functions/register [postgrest/tables/account postgrest/roles/account] 2016-01-25T21:22:19Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Added user registration function.
