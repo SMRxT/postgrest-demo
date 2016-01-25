@@ -3,3 +3,4 @@
 
 public/extensions/uuid-ossp 2016-01-25T20:52:04Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Adding uuid-ossp extension.
 postgrest/schema [public/extensions/uuid-ossp] 2016-01-25T20:50:20Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Create base schema for postgrest.
+postgrest/tables/account [postgrest/schema] 2016-01-25T20:53:54Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Creating basic user account for applicaiton.
