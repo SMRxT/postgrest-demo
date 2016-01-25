@@ -17,9 +17,6 @@ CREATE TABLE account(
    UNIQUE (role_string)
 );
 
--- CREATE ROLE postgrest_anonymous;
--- CREATE ROLE postgrest_account;
-
 -- ALTER TABLE account ENABLE ROW LEVEL SECURITY;
 
 -- CREATE POLICY view_owned ON account
