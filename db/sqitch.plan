@@ -1,4 +1,5 @@
 %syntax-version=1.0.0
 %project=postgrest-demo
 
-postgrest/schema 2016-01-25T20:50:20Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Create base schema for postgrest.
+public/extensions/uuid-ossp 2016-01-25T20:52:04Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Adding uuid-ossp extension.
+postgrest/schema [public/extensions/uuid-ossp] 2016-01-25T20:50:20Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Create base schema for postgrest.
