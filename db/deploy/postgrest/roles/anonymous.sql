@@ -5,4 +5,8 @@ BEGIN;
 
 CREATE ROLE postgrest_anonymous;
 
+GRANT USAGE 
+   ON SCHEMA postgrest 
+      TO postgrest_anonymous;
+
 COMMIT;

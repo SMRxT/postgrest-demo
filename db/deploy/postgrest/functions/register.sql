@@ -13,18 +13,21 @@ DECLARE
    aid uuid;
    rstr text;
 BEGIN
-   rstr := 'postgrest_account|' + email; 
-   INSERT INTO account (email, name, password, role_string)
-   VALUES (email, name, password, rstr)
-   RETURNING acccount_id into aid;
+   aid  := uuid_generate_v4();
+   rstr := 'postgrest_account_' || replace(aid::text, '-', '_');
+
+   INSERT INTO account (account_id, email, name, password, role_string)
+   VALUES (aid, email, name, password, rstr);
 
    EXECUTE format('CREATE ROLE %s;', rstr);
-   EXECUTE format('GRANT postgrest_account TO %s', rstr);
+   EXECUTE format('GRANT postgrest_account TO %s;', rstr);
+
+   RETURN aid;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE
-   ON FUNCTION register_account(text,text,text)
+   ON FUNCTION register_account(email text, name text, password text)
       TO postgrest_anonymous;
 
 COMMIT;

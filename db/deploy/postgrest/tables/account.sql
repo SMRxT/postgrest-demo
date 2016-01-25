@@ -17,12 +17,4 @@ CREATE TABLE account(
    UNIQUE (role_string)
 );
 
--- ALTER TABLE account ENABLE ROW LEVEL SECURITY;
-
--- CREATE POLICY view_owned ON account
-   -- FOR SELECT TO postgrest_account
-      -- USING (account_id = (SELECT account_id FROM account WHERE role_string = current_user))
-
--- GRANT SELECT ON account TO postgrest_account;
-
 COMMIT;
