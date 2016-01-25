@@ -24,7 +24,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 GRANT EXECUTE
-   ON FUNCTION register_account(text,text,text);
+   ON FUNCTION register_account(text,text,text)
       TO postgrest_anonymous;
 
 COMMIT;
