@@ -2,6 +2,10 @@
 
 BEGIN;
 
+REVOKE USAGE
+   ON SCHEMA postgrest
+      FROM postgrest_account;
+
 DROP ROLE postgrest_account;
 
 COMMIT;

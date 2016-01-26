@@ -8,3 +8,4 @@ postgrest/roles/account [postgrest/schema] 2016-01-25T21:20:39Z Andrew Rademache
 postgrest/tables/account [postgrest/schema postgrest/roles/account] 2016-01-25T20:53:54Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Creating basic user account for applicaiton.
 postgrest/functions/register [postgrest/tables/account postgrest/roles/account] 2016-01-25T21:22:19Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Added user registration function.
 postgrest/tables/private-logs [postgrest/schema postgrest/tables/account postgrest/roles/account] 2016-01-25T22:36:24Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Private logs table, only visible to self.
+postgrest/functions/get-current-account-id [postgrest/schema postgrest/tables/account] 2016-01-26T00:13:36Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Function to get the current account id.
