@@ -27,7 +27,7 @@ ALTER TABLE private_log
 
 CREATE POLICY view_owned ON private_log
    TO postgrest_account
-      USING (owned_by = (SELECT account_id FROM account WHERE role_string = current_user));
+      USING (owned_by = get_current_account_id());
 
 GRANT SELECT, INSERT
    ON private_log TO postgrest_account;
