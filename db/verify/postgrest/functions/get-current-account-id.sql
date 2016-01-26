@@ -19,6 +19,14 @@ BEGIN
    IF NOT (tmpaid = get_current_account_id()) THEN 
       RAISE EXCEPTION 'Account id from function and table are not equal.';
    END IF;
+
+   IF get_current_account_id() IS NULL THEN
+      RAISE EXCEPTION 'Account id from function is null.';
+   END IF;
+
+   IF tmpaid IS NULL THEN
+      RAISE EXCEPTION 'Account id from table is null.';
+   END IF;
 END$$;
 
 ROLLBACK;

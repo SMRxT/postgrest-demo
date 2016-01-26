@@ -22,16 +22,12 @@ CREATE INDEX private_log_idx_entered_at
 CREATE INDEX private_log_idx_owned_by
    ON private_log(owned_by);
 
--- ALTER TABLE private_log
-   -- ENABLE ROW LEVEL SECURITY;
+ALTER TABLE private_log
+   ENABLE ROW LEVEL SECURITY;
 
--- CREATE POLICY view_owned ON private_log 
-   -- FOR SELECT TO postgrest_account
-   -- USING (owned_by = (SELECT account_id FROM account WHERE role_string = current_user));
-
--- CREATE POLICY no_owner_on_insert ON private_log
-   -- FOR INSERT TO postgrest_account
-      -- WITH CHECK (owned_by = null);
+CREATE POLICY view_owned ON private_log
+   TO postgrest_account
+      USING (owned_by = (SELECT account_id FROM account WHERE role_string = current_user));
 
 GRANT SELECT, INSERT
    ON private_log TO postgrest_account;

@@ -18,7 +18,7 @@ BEGIN
 
    RETURN aid;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 GRANT EXECUTE
    ON FUNCTION get_current_account_id()
