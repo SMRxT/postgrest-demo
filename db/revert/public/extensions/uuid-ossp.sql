@@ -2,6 +2,6 @@
 
 BEGIN;
 
--- XXX Add DDLs here.
+DROP EXTENSION "uuid-ossp";
 
 COMMIT;

@@ -2,6 +2,6 @@
 
 BEGIN;
 
--- XXX Add DDLs here.
+DROP ROLE postgrest_account;
 
 COMMIT;

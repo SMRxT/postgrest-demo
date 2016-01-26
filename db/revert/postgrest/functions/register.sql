@@ -2,6 +2,8 @@
 
 BEGIN;
 
--- XXX Add DDLs here.
+SET search_path TO postgrest, public;
+
+DROP FUNCTION register_account(text, text, text);
 
 COMMIT;
