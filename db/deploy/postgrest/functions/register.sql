@@ -13,6 +13,8 @@ DECLARE
    aid uuid;
    rstr text;
 BEGIN
+   SET LOCAL search_path TO postgrest, public;
+
    aid  := uuid_generate_v4();
    rstr := 'postgrest_account_' || replace(aid::text, '-', '_');
 
