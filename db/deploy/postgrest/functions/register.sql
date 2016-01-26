@@ -7,7 +7,7 @@ BEGIN;
 SET search_path TO postgrest, public;
 
 CREATE FUNCTION register_account(email text, name text, password text)
-   RETURNS uuid AS  
+   RETURNS text AS  
 $$
 DECLARE
    aid uuid;
@@ -22,7 +22,7 @@ BEGIN
    EXECUTE format('CREATE ROLE %s;', rstr);
    EXECUTE format('GRANT postgrest_account TO %s;', rstr);
 
-   RETURN aid;
+   RETURN rstr;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
