@@ -12,6 +12,8 @@ $$
 DECLARE
    aid uuid;
 BEGIN
+   SET LOCAL search_path TO postgrest, public;
+
    SELECT account_id INTO aid
    FROM account
    WHERE role_string = current_user;
