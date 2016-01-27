@@ -10,13 +10,13 @@ module Main where
 
 import           Control.Concurrent
 import           Control.Concurrent.Async
+import           Control.Concurrent.STM
 import           Control.Lens
 import           Control.Monad
+import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Aeson.Casing
 import           Data.Aeson.Lens
-import           Data.Map                       (Map)
-import qualified Data.Map                       as Map
 import           Data.Maybe
 import           Data.String
 import           Data.Text                      (Text)
@@ -25,8 +25,11 @@ import           Data.Typeable
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.URL
 import           GHC.Generics
+import qualified ListT
 import           Network.Wreq
 import           Network.Wreq.Types             (Postable (..))
+import           STMContainers.Map              (Map)
+import qualified STMContainers.Map              as Map
 import           System.IO
 import           System.IO.Unsafe
 import           System.Process
@@ -40,7 +43,7 @@ data TestEnv
    = TestEnv
       { envPostgresConnection :: !Connection
       , envWebserverHandles   :: !(Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
-      , envAccountSet         :: MVar (Map Text Account)
+      , envAccountSet         :: Map Text Account
       }
 
 -- BEGIN: Messages
@@ -124,7 +127,7 @@ initEnv = do
 
    threadDelay 500000
 
-   as <- newMVar Map.empty
+   as <- Map.newIO
    return $ TestEnv pgConn wsProc as
 
 freeEnv :: Bool -> TestEnv -> IO ()
@@ -137,9 +140,8 @@ freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
       revECode <- waitForProcess revPH
       print revECode
 
-      as <- readMVar aset
-      mapM_ (execute_ pgConn)
-         ((\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Map.toList as)
+      lst <- atomically $ ListT.toList $ Map.stream aset
+      mapM_ (execute_ pgConn) $ (\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> lst
 
 --
 
@@ -156,7 +158,7 @@ caseRegisterUser getEnv = do
       (RegisterPostReq "andrew.rademacher@smrxt.com" "Andrew Rademacher" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
-      Just  a -> modifyMVar_ (env ^. accountSet) (return . Map.insert "andrew" a)
+      Just  a -> atomically $ Map.insert a "andrew" (env ^. accountSet)
 
 caseUnauthenticatedAccount :: IO TestEnv -> IO ()
 caseUnauthenticatedAccount getEnv = do
@@ -166,3 +168,9 @@ caseUnauthenticatedAccount getEnv = do
    case res ^? responseBody . _JSON . (code :: Lens' PostgrestError Text) of
       Nothing -> assertFailure "Error was not produced."
       Just  a -> "42501" @=? a
+
+{-caseGetAccount :: IO TestEnv -> IO ()-}
+{-caseGetAccount getEnv = do-}
+   {-env <- getEnv-}
+   {-return ()-}
+

@@ -28,14 +28,18 @@ executable test
                      ,  containers
                      ,  lens
                      ,  lens-aeson
+                     ,  list-t
                      ,  process
                      ,  process-extras
                      ,  postgresql-simple
                      ,  postgresql-simple-url
+                     ,  stm
+                     ,  stm-containers
                      ,  tasty
                      ,  tasty-hunit
                      ,  tasty-quickcheck
                      ,  text
+                     ,  transformers
                      ,  uuid
                      ,  uuid-aeson
                      ,  wreq
