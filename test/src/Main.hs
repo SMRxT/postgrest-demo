@@ -17,10 +17,14 @@ import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Aeson.Casing
 import           Data.Aeson.Lens
+import           Data.ByteString                (ByteString)
+import           Data.Default
+import qualified Data.Map
 import           Data.Maybe
 import           Data.String
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
+import qualified Data.Text.Encoding             as T
 import           Data.Typeable
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.URL
@@ -36,6 +40,10 @@ import           System.Process
 import           Test.Tasty
 import           Test.Tasty.HUnit               as HUnit
 import           Test.Tasty.QuickCheck          as QC
+import           Web.JWT                        (Algorithm (..), ClaimsMap,
+                                                 JSON, JWTClaimsSet,
+                                                 encodeSigned, secret,
+                                                 unregisteredClaims)
 
 type Account = Text
 
@@ -143,12 +151,23 @@ freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
       lst <- atomically $ ListT.toList $ Map.stream aset
       mapM_ (execute_ pgConn) $ (\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> lst
 
+encodeRole :: Account -> JSON
+encodeRole account =
+   let c = def { unregisteredClaims = Data.Map.fromList [("role", toJSON account)] }
+    in encodeSigned HS256 (secret "secret") c
+
+buildRoleHeader :: Account -> [ByteString]
+buildRoleHeader account =
+   let tok = encodeRole account
+    in [ T.encodeUtf8 $ T.concat ["Bearer ", tok ] ]
+
 --
 
 tests :: IO TestEnv -> TestTree
 tests getEnv = testGroup "HTTP Tests"
    [ testCase "Register User" $ caseRegisterUser getEnv
    , testCase "Get Account info as Anon" $ caseUnauthenticatedAccount getEnv
+   , testCase "Get Account for andrew" $ caseGetAccount getEnv
    ]
 
 caseRegisterUser :: IO TestEnv -> IO ()
@@ -169,8 +188,15 @@ caseUnauthenticatedAccount getEnv = do
       Nothing -> assertFailure "Error was not produced."
       Just  a -> "42501" @=? a
 
-{-caseGetAccount :: IO TestEnv -> IO ()-}
-{-caseGetAccount getEnv = do-}
-   {-env <- getEnv-}
-   {-return ()-}
-
+caseGetAccount :: IO TestEnv -> IO ()
+caseGetAccount getEnv = do
+   env <- getEnv
+   rol <- atomically $ do
+      v <- Map.lookup "andrew" (env ^. accountSet)
+      case v of
+         Nothing -> retry
+         Just  r -> return r
+   res <- flip getWith "http://localhost:3000/account"
+            $ defaults & header "Authorization" .~ buildRoleHeader rol
+   print (res ^? responseBody . _JSON :: Maybe Value)
+   return ()

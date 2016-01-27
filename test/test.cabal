@@ -26,6 +26,8 @@ executable test
                      ,  async
                      ,  bytestring
                      ,  containers
+                     ,  data-default
+                     ,  jwt
                      ,  lens
                      ,  lens-aeson
                      ,  list-t
