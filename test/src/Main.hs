@@ -51,7 +51,7 @@ data TestEnv
    = TestEnv
       { envPostgresConnection :: !Connection
       , envWebserverHandles   :: !(Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
-      , envAccountSet         :: Map Text Account
+      , envAccountMap         :: Map Text Account
       }
 
 -- BEGIN: Messages
@@ -163,7 +163,7 @@ buildRoleHeader account =
 
 requireRole :: Text -> TestEnv -> IO Account
 requireRole rolname env = atomically $ do
-   v <- Map.lookup rolname (env ^. accountSet)
+   v <- Map.lookup rolname (env ^. accountMap)
    case v of
       Nothing -> retry
       Just  r -> return r
@@ -189,7 +189,7 @@ caseRegisterAndrew getEnv = do
       (RegisterPostReq "andrew.rademacher@smrxt.com" "Andrew Rademacher" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
-      Just  a -> atomically $ Map.insert a "andrew" (env ^. accountSet)
+      Just  a -> atomically $ Map.insert a "andrew" (env ^. accountMap)
 
 caseRegisterJoe :: IO TestEnv -> IO ()
 caseRegisterJoe getEnv = do
@@ -198,7 +198,7 @@ caseRegisterJoe getEnv = do
       (RegisterPostReq "joe.andaverde@smrxt.com" "Joe Andaverde" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
-      Just  a -> atomically $ Map.insert a "joe" (env ^. accountSet)
+      Just  a -> atomically $ Map.insert a "joe" (env ^. accountMap)
 
 caseRegisterScott :: IO TestEnv -> IO ()
 caseRegisterScott getEnv = do
@@ -207,7 +207,7 @@ caseRegisterScott getEnv = do
       (RegisterPostReq "scott.smerchek@smrxt.com" "Scott Smerchek" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
-      Just  a -> atomically $ Map.insert a "scott" (env ^. accountSet)
+      Just  a -> atomically $ Map.insert a "scott" (env ^. accountMap)
 
 
 caseUnauthenticatedAccount :: IO TestEnv -> IO ()
@@ -223,7 +223,7 @@ caseGetAccountAndrew :: IO TestEnv -> IO ()
 caseGetAccountAndrew getEnv = do
    env <- getEnv
    rol <- atomically $ do
-      v <- Map.lookup "andrew" (env ^. accountSet)
+      v <- Map.lookup "andrew" (env ^. accountMap)
       case v of
          Nothing -> retry
          Just  r -> return r
@@ -237,7 +237,7 @@ caseGetAccountJoe :: IO TestEnv -> IO ()
 caseGetAccountJoe getEnv = do
    env <- getEnv
    rol <- atomically $ do
-      v <- Map.lookup "joe" (env ^. accountSet)
+      v <- Map.lookup "joe" (env ^. accountMap)
       case v of
          Nothing -> retry
          Just  r -> return r
