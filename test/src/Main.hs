@@ -178,6 +178,8 @@ tests getEnv = testGroup "HTTP Tests"
    , testCase "Get Account info as Anon" $ caseUnauthenticatedAccount getEnv
    , testCase "Get Account for andrew" $ caseGetAccountAndrew getEnv
    , testCase "Get Account for joe" $ caseGetAccountJoe getEnv
+   , testCase "Add Log entries for Joe" $ caseLogThreeEntriesJoe getEnv
+   , testCase "Add Log entries for Scott" $ caseLogThreeEntriesScott getEnv
    ]
 
 caseRegisterAndrew :: IO TestEnv -> IO ()
@@ -259,4 +261,20 @@ caseLogThreeEntriesJoe getEnv = do
    _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
             "http://localhost:3000/private_log"
             (object [ "body" .= ("This is Joe's third entry."::Text) ])
+   return ()
+
+caseLogThreeEntriesScott :: IO TestEnv -> IO ()
+caseLogThreeEntriesScott getEnv = do
+   env <- getEnv
+   rol <- requireRole "scott" env
+   _   <- postWith
+            (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Scott's first entry."::Text) ])
+   _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Scott's second entry."::Text) ])
+   _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Scott's third entry."::Text) ])
    return ()
