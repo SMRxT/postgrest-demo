@@ -17,7 +17,7 @@ executable test
     hs-source-dirs:     src
     default-language:   Haskell2010
 
-    ghc-options:        -rtsopts
+    ghc-options:        -rtsopts -threaded -with-rtsopts=-N
 
     build-depends:      base            ==4.*
 
@@ -36,6 +36,8 @@ executable test
                      ,  process-extras
                      ,  postgresql-simple
                      ,  postgresql-simple-url
+                     ,  regex-tdfa
+                     ,  regex-tdfa-text
                      ,  stm
                      ,  stm-containers
                      ,  tasty

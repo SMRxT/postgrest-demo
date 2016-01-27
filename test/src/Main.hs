@@ -43,6 +43,8 @@ import           System.Process
 import           Test.Tasty
 import           Test.Tasty.HUnit               as HUnit
 import           Test.Tasty.QuickCheck          as QC
+import           Text.Regex.TDFA
+import           Text.Regex.TDFA.Text
 import           Web.JWT                        (Algorithm (..), ClaimsMap,
                                                  JSON, JWTClaimsSet,
                                                  encodeSigned, secret,
@@ -173,12 +175,17 @@ buildRoleHeader account =
    let tok = encodeRole account
     in [ T.encodeUtf8 $ T.concat ["Bearer ", tok ] ]
 
-requireRole :: Text -> TestEnv -> IO Account
-requireRole rolname env = atomically $ do
+requireRole :: Text -> TestEnv -> STM Account
+requireRole rolname env = do
    v <- Map.lookup rolname (env ^. accountMap)
    case v of
       Nothing -> retry
       Just  r -> return r
+
+requireFlag :: Flag -> TestEnv -> STM ()
+requireFlag flg env = do
+   f <- Set.lookup flg (env ^. flagSet)
+   unless f retry
 
 --
 
@@ -192,6 +199,8 @@ tests getEnv = testGroup "HTTP Tests"
    , testCase "Get Account for joe" $ caseGetAccountJoe getEnv
    , testCase "Add Log entries for Joe" $ caseLogThreeEntriesJoe getEnv
    , testCase "Add Log entries for Scott" $ caseLogThreeEntriesScott getEnv
+   , testCase "Get Log entries for Joe" $ caseGetLogsJoe getEnv
+   , testCase "Get Log entries for Scott" $ caseGetLogsScott getEnv
    ]
 
 caseRegisterAndrew :: IO TestEnv -> IO ()
@@ -262,7 +271,7 @@ caseGetAccountJoe getEnv = do
 caseLogThreeEntriesJoe :: IO TestEnv -> IO ()
 caseLogThreeEntriesJoe getEnv = do
    env <- getEnv
-   rol <- requireRole "joe" env
+   rol <- atomically $ requireRole "joe" env
    _   <- postWith
             (defaults & header "Authorization" .~ buildRoleHeader rol)
             "http://localhost:3000/private_log"
@@ -278,7 +287,7 @@ caseLogThreeEntriesJoe getEnv = do
 caseLogThreeEntriesScott :: IO TestEnv -> IO ()
 caseLogThreeEntriesScott getEnv = do
    env <- getEnv
-   rol <- requireRole "scott" env
+   rol <- atomically $ requireRole "scott" env
    _   <- postWith
             (defaults & header "Authorization" .~ buildRoleHeader rol)
             "http://localhost:3000/private_log"
@@ -290,3 +299,29 @@ caseLogThreeEntriesScott getEnv = do
             "http://localhost:3000/private_log"
             (object [ "body" .= ("This is Scott's third entry."::Text) ])
    atomically $ Set.insert FlagLogEntriesScott (env ^. flagSet)
+
+caseGetLogsJoe :: IO TestEnv -> IO ()
+caseGetLogsJoe getEnv = do
+   env <- getEnv
+   rol <- atomically $ do
+      requireFlag FlagLogEntriesJoe env
+      requireFlag FlagLogEntriesScott env
+      requireRole "joe" env
+   res <- flip getWith "http://localhost:3000/private_log"
+            $ defaults & header "Authorization" .~ buildRoleHeader rol
+   let entries = res ^.. responseBody . values . key "body" . _String
+   3 @=? length entries
+   True @=? foldl (\b e -> b && e =~ ("Joe's"::Text)) True entries
+
+caseGetLogsScott :: IO TestEnv -> IO ()
+caseGetLogsScott getEnv = do
+   env <- getEnv
+   rol <- atomically $ do
+      requireFlag FlagLogEntriesJoe env
+      requireFlag FlagLogEntriesScott env
+      requireRole "scott" env
+   res <- flip getWith "http://localhost:3000/private_log"
+            $ defaults & header "Authorization" .~ buildRoleHeader rol
+   let entries = res ^.. responseBody . values . key "body" . _String
+   3 @=? length entries
+   True @=? foldl (\b e -> b && e =~ ("Scott's"::Text)) True entries
