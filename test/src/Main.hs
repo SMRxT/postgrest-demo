@@ -19,6 +19,7 @@ import           Data.Aeson.Casing
 import           Data.Aeson.Lens
 import           Data.ByteString                (ByteString)
 import           Data.Default
+import           Data.Hashable
 import qualified Data.Map
 import           Data.Maybe
 import           Data.String
@@ -52,6 +53,9 @@ type Account = Text
 data Flag
    = FlagLogEntriesJoe
    | FlagLogEntriesScott
+   deriving (Eq, Ord, Typeable, Generic)
+
+instance Hashable Flag
 
 data TestEnv
    = TestEnv
@@ -269,7 +273,7 @@ caseLogThreeEntriesJoe getEnv = do
    _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
             "http://localhost:3000/private_log"
             (object [ "body" .= ("This is Joe's third entry."::Text) ])
-   return ()
+   atomically $ Set.insert FlagLogEntriesJoe (env ^. flagSet)
 
 caseLogThreeEntriesScott :: IO TestEnv -> IO ()
 caseLogThreeEntriesScott getEnv = do
@@ -285,4 +289,4 @@ caseLogThreeEntriesScott getEnv = do
    _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
             "http://localhost:3000/private_log"
             (object [ "body" .= ("This is Scott's third entry."::Text) ])
-   return ()
+   atomically $ Set.insert FlagLogEntriesScott (env ^. flagSet)

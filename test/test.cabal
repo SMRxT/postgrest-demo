@@ -27,6 +27,7 @@ executable test
                      ,  bytestring
                      ,  containers
                      ,  data-default
+                     ,  hashable
                      ,  jwt
                      ,  lens
                      ,  lens-aeson
