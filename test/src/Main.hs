@@ -14,9 +14,9 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Casing
 import           Data.Aeson.Lens
+import           Data.Map                       (Map)
+import qualified Data.Map                       as Map
 import           Data.Maybe
-import           Data.Set                       (Set)
-import qualified Data.Set                       as Set
 import           Data.String
 import           Data.Text                      (Text)
 import qualified Data.Text                      as T
@@ -39,7 +39,7 @@ data TestEnv
    = TestEnv
       { envPostgresConnection :: !Connection
       , envWebserverHandles   :: !(Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
-      , envAccountSet         :: MVar (Set Account)
+      , envAccountSet         :: MVar (Map Text Account)
       }
 
 -- BEGIN: Messages
@@ -105,7 +105,7 @@ initEnv = do
 
    threadDelay 500000
 
-   as <- newMVar Set.empty
+   as <- newMVar Map.empty
    return $ TestEnv pgConn wsProc as
 
 freeEnv :: TestEnv -> IO ()
@@ -119,7 +119,7 @@ freeEnv (TestEnv pgConn (_, _, _, wsPH) aset) = do
 
    as <- readMVar aset
    mapM_ (execute_ pgConn)
-      ((\a -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Set.toList as)
+      ((\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Map.toList as)
 
 --
 
@@ -135,4 +135,4 @@ caseRegisterUser getEnv = do
       (RegisterPostReq "andrew.rademacher@smrxt.com" "Andrew Rademacher" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
-      Just  a -> modifyMVar_ (env ^. accountSet) (return . Set.insert a)
+      Just  a -> modifyMVar_ (env ^. accountSet) (return . Map.insert "andrew" a)
