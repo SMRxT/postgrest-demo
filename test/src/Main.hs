@@ -165,19 +165,40 @@ buildRoleHeader account =
 
 tests :: IO TestEnv -> TestTree
 tests getEnv = testGroup "HTTP Tests"
-   [ testCase "Register User" $ caseRegisterUser getEnv
+   [ testCase "Register User: andrew" $ caseRegisterAndrew getEnv
+   , testCase "Register User: joe" $ caseRegisterJoe getEnv
+   , testCase "Register User: scott" $ caseRegisterScott getEnv
    , testCase "Get Account info as Anon" $ caseUnauthenticatedAccount getEnv
    , testCase "Get Account for andrew" $ caseGetAccount getEnv
    ]
 
-caseRegisterUser :: IO TestEnv -> IO ()
-caseRegisterUser getEnv = do
+caseRegisterAndrew :: IO TestEnv -> IO ()
+caseRegisterAndrew getEnv = do
    env <- getEnv
    res <- post "http://localhost:3000/rpc/register_account"
       (RegisterPostReq "andrew.rademacher@smrxt.com" "Andrew Rademacher" "12345")
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
       Just  a -> atomically $ Map.insert a "andrew" (env ^. accountSet)
+
+caseRegisterJoe :: IO TestEnv -> IO ()
+caseRegisterJoe getEnv = do
+   env <- getEnv
+   res <- post "http://localhost:3000/rpc/register_account"
+      (RegisterPostReq "joe.andaverde@smrxt.com" "Joe Andaverde" "12345")
+   case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
+      Nothing -> assertFailure "Response did not contain account name."
+      Just  a -> atomically $ Map.insert a "joe" (env ^. accountSet)
+
+caseRegisterScott :: IO TestEnv -> IO ()
+caseRegisterScott getEnv = do
+   env <- getEnv
+   res <- post "http://localhost:3000/rpc/register_account"
+      (RegisterPostReq "scott.smerchek@smrxt.com" "Scott Smerchek" "12345")
+   case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
+      Nothing -> assertFailure "Response did not contain account name."
+      Just  a -> atomically $ Map.insert a "scott" (env ^. accountSet)
+
 
 caseUnauthenticatedAccount :: IO TestEnv -> IO ()
 caseUnauthenticatedAccount getEnv = do
