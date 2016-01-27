@@ -25,6 +25,7 @@ executable test
                      ,  aeson-casing
                      ,  async
                      ,  bytestring
+                     ,  containers
                      ,  lens
                      ,  lens-aeson
                      ,  process
@@ -34,6 +35,7 @@ executable test
                      ,  tasty
                      ,  tasty-hunit
                      ,  tasty-quickcheck
+                     ,  text
                      ,  uuid
                      ,  uuid-aeson
                      ,  wreq
