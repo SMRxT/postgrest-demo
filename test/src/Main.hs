@@ -26,7 +26,7 @@ import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.URL
 import           GHC.Generics
 import           Network.Wreq
-import           Network.Wreq.Types
+import           Network.Wreq.Types             (Postable (..))
 import           System.IO
 import           System.IO.Unsafe
 import           System.Process
@@ -45,6 +45,22 @@ data TestEnv
 
 -- BEGIN: Messages
 
+data PostgrestError
+   = PostgrestError
+      { pgerrCode    :: Text
+      , pgerrDetails :: Maybe Text
+      , pgerrHint    :: Maybe Text
+      , pgerrMessage :: Text
+      }
+   deriving (Show, Typeable, Generic)
+
+instance ToJSON PostgrestError where
+   toJSON = genericToJSON $ aesonPrefix snakeCase
+instance FromJSON PostgrestError where
+   parseJSON = genericParseJSON $ aesonPrefix snakeCase
+
+--
+
 data RegisterPostReq
    = RegisterPostReq
       { regpostreqEmail    :: Text
@@ -60,6 +76,8 @@ instance FromJSON RegisterPostReq where
 instance Postable RegisterPostReq where
    postPayload = postPayload . toJSON
 
+--
+
 data RegisterPostRes
    = RegisterPostRes
       { regpostresRegisterAccount :: Text
@@ -71,6 +89,7 @@ instance ToJSON RegisterPostRes where
 instance FromJSON RegisterPostRes where
    parseJSON = genericParseJSON $ aesonPrefix snakeCase
 
+$(makeLensesWith abbreviatedFields ''PostgrestError)
 $(makeLensesWith abbreviatedFields ''RegisterPostReq)
 $(makeLensesWith abbreviatedFields ''RegisterPostRes)
 
@@ -127,6 +146,7 @@ freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
 tests :: IO TestEnv -> TestTree
 tests getEnv = testGroup "HTTP Tests"
    [ testCase "Register User" $ caseRegisterUser getEnv
+   , testCase "Get Account info as Anon" $ caseUnauthenticatedAccount getEnv
    ]
 
 caseRegisterUser :: IO TestEnv -> IO ()
@@ -137,3 +157,12 @@ caseRegisterUser getEnv = do
    case res ^? responseBody . nth 0 . _JSON . (registerAccount :: Lens' RegisterPostRes Text) of
       Nothing -> assertFailure "Response did not contain account name."
       Just  a -> modifyMVar_ (env ^. accountSet) (return . Map.insert "andrew" a)
+
+caseUnauthenticatedAccount :: IO TestEnv -> IO ()
+caseUnauthenticatedAccount getEnv = do
+   env <- getEnv
+   res <- flip getWith "http://localhost:3000/account"
+            $ defaults & checkStatus ?~ (\_ _ _ -> Nothing)
+   case res ^? responseBody . _JSON . (code :: Lens' PostgrestError Text) of
+      Nothing -> assertFailure "Error was not produced."
+      Just  a -> "42501" @=? a
