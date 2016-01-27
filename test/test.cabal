@@ -23,9 +23,12 @@ executable test
 
                      ,  aeson
                      ,  aeson-casing
+                     ,  async
                      ,  bytestring
                      ,  lens
                      ,  lens-aeson
+                     ,  process
+                     ,  process-extras
                      ,  postgresql-simple
                      ,  postgresql-simple-url
                      ,  tasty
