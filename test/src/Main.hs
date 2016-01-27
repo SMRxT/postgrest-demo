@@ -11,6 +11,7 @@ module Main where
 import           Control.Concurrent
 import           Control.Concurrent.Async
 import           Control.Lens
+import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Casing
 import           Data.Aeson.Lens
@@ -78,8 +79,7 @@ $(makeLensesWith abbreviatedFields ''RegisterPostRes)
 $(makeLensesWith abbreviatedFields ''TestEnv)
 
 main :: IO ()
-main = defaultMain
-   $ withResource initEnv freeEnv tests
+main = defaultMain $ withResource initEnv (freeEnv True) tests
 
 initEnv :: IO TestEnv
 initEnv = do
@@ -108,18 +108,19 @@ initEnv = do
    as <- newMVar Map.empty
    return $ TestEnv pgConn wsProc as
 
-freeEnv :: TestEnv -> IO ()
-freeEnv (TestEnv pgConn (_, _, _, wsPH) aset) = do
+freeEnv :: Bool -> TestEnv -> IO ()
+freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
    terminateProcess wsPH
 
-   revProc@(_, _, _, revPH) <- createProcess
-      (shell "cd ../db && sqitch revert -y")
-   revECode <- waitForProcess revPH
-   print revECode
+   when revert $ do
+      revProc@(_, _, _, revPH) <- createProcess
+         (shell "cd ../db && sqitch revert -y")
+      revECode <- waitForProcess revPH
+      print revECode
 
-   as <- readMVar aset
-   mapM_ (execute_ pgConn)
-      ((\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Map.toList as)
+      as <- readMVar aset
+      mapM_ (execute_ pgConn)
+         ((\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Map.toList as)
 
 --
 
