@@ -34,6 +34,8 @@ import           Network.Wreq
 import           Network.Wreq.Types             (Postable (..))
 import           STMContainers.Map              (Map)
 import qualified STMContainers.Map              as Map
+import           STMContainers.Set              (Set)
+import qualified STMContainers.Set              as Set
 import           System.IO
 import           System.IO.Unsafe
 import           System.Process
@@ -47,11 +49,16 @@ import           Web.JWT                        (Algorithm (..), ClaimsMap,
 
 type Account = Text
 
+data Flag
+   = FlagLogEntriesJoe
+   | FlagLogEntriesScott
+
 data TestEnv
    = TestEnv
       { envPostgresConnection :: !Connection
       , envWebserverHandles   :: !(Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
       , envAccountMap         :: Map Text Account
+      , envFlagSet            :: Set Flag
       }
 
 -- BEGIN: Messages
@@ -135,11 +142,12 @@ initEnv = do
 
    threadDelay 500000
 
-   as <- Map.newIO
-   return $ TestEnv pgConn wsProc as
+   am <- Map.newIO
+   fs <- Set.newIO
+   return $ TestEnv pgConn wsProc am fs
 
 freeEnv :: Bool -> TestEnv -> IO ()
-freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
+freeEnv revert (TestEnv pgConn (_, _, _, wsPH) amap fset) = do
    terminateProcess wsPH
 
    when revert $ do
@@ -148,7 +156,7 @@ freeEnv revert (TestEnv pgConn (_, _, _, wsPH) aset) = do
       revECode <- waitForProcess revPH
       print revECode
 
-      lst <- atomically $ ListT.toList $ Map.stream aset
+      lst <- atomically $ ListT.toList $ Map.stream amap
       mapM_ (execute_ pgConn) $ (\(_, a) -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> lst
 
 encodeRole :: Account -> JSON
