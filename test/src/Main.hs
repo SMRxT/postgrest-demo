@@ -118,13 +118,8 @@ freeEnv (TestEnv pgConn (_, _, _, wsPH) aset) = do
    print revECode
 
    as <- readMVar aset
-   {-fmap (\a -> ) (Set.toList as)-}
-   {-mapM_ (execute pgConn "DROP ROLE ?;") (Only <$> Set.toList as)-}
-   {-mapM_ (execute pgConn) (BS.concat ["DROP ROLE ", T.encodeUTf-}
    mapM_ (execute_ pgConn)
-      {-((\a -> BS.concat ["DROP ROLE ", T.encodeUtf8 a]) <$> Set.toList as)-}
       ((\a -> fromString $ "DROP ROLE " ++ T.unpack a ++ ";") <$> Set.toList as)
-   {-execute pgConn "DROP ROLE ?;" a-}
 
 --
 
