@@ -11,7 +11,7 @@ module Main where
 import           Control.Concurrent
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
-import           Control.Lens
+import           Control.Lens                   hiding ((.=))
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson
@@ -161,6 +161,13 @@ buildRoleHeader account =
    let tok = encodeRole account
     in [ T.encodeUtf8 $ T.concat ["Bearer ", tok ] ]
 
+requireRole :: Text -> TestEnv -> IO Account
+requireRole rolname env = atomically $ do
+   v <- Map.lookup rolname (env ^. accountSet)
+   case v of
+      Nothing -> retry
+      Just  r -> return r
+
 --
 
 tests :: IO TestEnv -> TestTree
@@ -237,3 +244,19 @@ caseGetAccountJoe getEnv = do
    case res ^? responseBody . nth 0 . key "name" . _String of
       Nothing -> assertFailure "Response did not contain account holder name."
       Just  n -> "Joe Andaverde" @=? n
+
+caseLogThreeEntriesJoe :: IO TestEnv -> IO ()
+caseLogThreeEntriesJoe getEnv = do
+   env <- getEnv
+   rol <- requireRole "joe" env
+   _   <- postWith
+            (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Joe's first entry."::Text) ])
+   _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Joe's second entry."::Text) ])
+   _   <- postWith (defaults & header "Authorization" .~ buildRoleHeader rol)
+            "http://localhost:3000/private_log"
+            (object [ "body" .= ("This is Joe's third entry."::Text) ])
+   return ()
