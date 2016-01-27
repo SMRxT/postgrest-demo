@@ -169,7 +169,8 @@ tests getEnv = testGroup "HTTP Tests"
    , testCase "Register User: joe" $ caseRegisterJoe getEnv
    , testCase "Register User: scott" $ caseRegisterScott getEnv
    , testCase "Get Account info as Anon" $ caseUnauthenticatedAccount getEnv
-   , testCase "Get Account for andrew" $ caseGetAccount getEnv
+   , testCase "Get Account for andrew" $ caseGetAccountAndrew getEnv
+   , testCase "Get Account for joe" $ caseGetAccountJoe getEnv
    ]
 
 caseRegisterAndrew :: IO TestEnv -> IO ()
@@ -209,8 +210,8 @@ caseUnauthenticatedAccount getEnv = do
       Nothing -> assertFailure "Error was not produced."
       Just  a -> "42501" @=? a
 
-caseGetAccount :: IO TestEnv -> IO ()
-caseGetAccount getEnv = do
+caseGetAccountAndrew :: IO TestEnv -> IO ()
+caseGetAccountAndrew getEnv = do
    env <- getEnv
    rol <- atomically $ do
       v <- Map.lookup "andrew" (env ^. accountSet)
@@ -219,11 +220,20 @@ caseGetAccount getEnv = do
          Just  r -> return r
    res <- flip getWith "http://localhost:3000/account"
             $ defaults & header "Authorization" .~ buildRoleHeader rol
-
-   case res ^? responseBody . nth 0 . key "role_string" . _String of
-      Nothing -> assertFailure "Response did not contain a role_string."
-      Just  r -> rol @=? r
-
    case res ^? responseBody . nth 0 . key "name" . _String of
       Nothing -> assertFailure "Response did not contain account holder name."
       Just  n -> "Andrew Rademacher" @=? n
+
+caseGetAccountJoe :: IO TestEnv -> IO ()
+caseGetAccountJoe getEnv = do
+   env <- getEnv
+   rol <- atomically $ do
+      v <- Map.lookup "joe" (env ^. accountSet)
+      case v of
+         Nothing -> retry
+         Just  r -> return r
+   res <- flip getWith "http://localhost:3000/account"
+            $ defaults & header "Authorization" .~ buildRoleHeader rol
+   case res ^? responseBody . nth 0 . key "name" . _String of
+      Nothing -> assertFailure "Response did not contain account holder name."
+      Just  n -> "Joe Andaverde" @=? n
