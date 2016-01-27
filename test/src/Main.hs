@@ -198,5 +198,11 @@ caseGetAccount getEnv = do
          Just  r -> return r
    res <- flip getWith "http://localhost:3000/account"
             $ defaults & header "Authorization" .~ buildRoleHeader rol
-   print (res ^? responseBody . _JSON :: Maybe Value)
-   return ()
+
+   case res ^? responseBody . nth 0 . key "role_string" . _String of
+      Nothing -> assertFailure "Response did not contain a role_string."
+      Just  r -> rol @=? r
+
+   case res ^? responseBody . nth 0 . key "name" . _String of
+      Nothing -> assertFailure "Response did not contain account holder name."
+      Just  n -> "Andrew Rademacher" @=? n
