@@ -10,3 +10,6 @@ postgrest/functions/register [postgrest/tables/account postgrest/roles/account] 
 postgrest/functions/get-current-account-id [postgrest/schema postgrest/tables/account] 2016-01-26T00:13:36Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Function to get the current account id.
 postgrest/tables/private-logs [postgrest/schema postgrest/tables/account postgrest/roles/account postgrest/functions/get-current-account-id] 2016-01-25T22:36:24Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Private logs table, only visible to self.
 @v1.0.0 2016-01-27T21:52:39Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Tagged v1.0.0 | private log features.
+
+public/extensions/temporal-tables 2016-01-27T21:55:20Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Add extention dependency on temporal tables.
+postgrest/tables/event-space [public/extensions/temporal-tables postgrest/roles/account postgrest/functions/get-current-account-id postgrest/tables/account] 2016-01-27T21:58:45Z Andrew Rademacher <andrew.rademacher@smrxt.com> # Adding tables for event space and event space history.
